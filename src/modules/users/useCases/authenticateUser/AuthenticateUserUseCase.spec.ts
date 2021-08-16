@@ -2,6 +2,7 @@ import { InMemoryUsersRepository } from "../../repositories/in-memory/InMemoryUs
 import { AuthenticateUserUseCase } from "./AuthenticateUserUseCase";
 import { User } from "../../entities/User";
 import { CreateUserUseCase } from "../createUser/CreateUserUseCase";
+import { AppError } from "../../../../shared/errors/AppError";
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let authenticateUserUseCase: AuthenticateUserUseCase;
@@ -32,5 +33,33 @@ describe("Authenticate User", () => {
     });
 
     expect(authentication).toHaveProperty("token");
+  });
+
+  it("should not be able to authenticate a non-existant user", async () => {
+    const userLoginData = {
+      email: "dev.vyctor@gmail.com",
+      password: "123123",
+    };
+
+    expect(async () => {
+      await authenticateUserUseCase.execute(userLoginData);
+    }).rejects.toBeInstanceOf(AppError);
+  });
+
+  it("should not be able to authenticate a user with wrong password", async () => {
+    const user = {
+      name: "Vyctor",
+      email: "dev.vyctor@gmail.com",
+      password: "123123",
+    };
+
+    await createUserUseCase.execute(user);
+
+    expect(async () => {
+      await authenticateUserUseCase.execute({
+        email: user.email,
+        password: "wrong-password",
+      });
+    }).rejects.toBeInstanceOf(AppError);
   });
 });
